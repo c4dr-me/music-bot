@@ -18,43 +18,61 @@ yt_dlp.utils.bug_reports_message = lambda: ''
 # Configure opus loading
 if not discord.opus.is_loaded():
     try:
-        # Check common locations for the Opus library on Replit
-        possible_opus_paths = [
-            '/usr/lib/libopus.so.0',
-            '/usr/lib/x86_64-linux-gnu/libopus.so.0',
-            '/nix/store/*/libopus.so.0',
-            '/home/runner/.apt/usr/lib/libopus.so.0',
-            '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/discord/libopus.so.0'
-        ]
+        print("Attempting to load opus library...")
         
-        # Try each possible path
-        for path in possible_opus_paths:
-            import glob
-            if "*" in path:
-                paths = glob.glob(path)
-                for p in paths:
-                    try:
-                        discord.opus.load_opus(p)
-                        print(f"Successfully loaded opus from {p}")
-                        break
-                    except Exception:
-                        continue
-            else:
-                try:
-                    discord.opus.load_opus(path)
-                    print(f"Successfully loaded opus from {path}")
-                    break
-                except Exception:
-                    continue
-                    
-        # If still not loaded, try the system path
-        if not discord.opus.is_loaded():
-            opus_path = ctypes.util.find_library('opus')
-            if opus_path:
+        # Try loading from system paths first
+        opus_path = ctypes.util.find_library('opus')
+        if opus_path:
+            try:
                 discord.opus.load_opus(opus_path)
-                print(f"Successfully loaded opus from {opus_path}")
+                print(f"Successfully loaded opus from system path: {opus_path}")
+            except Exception as e:
+                print(f"Failed to load opus from system path: {e}")
+        
+        # If not loaded, try common locations
+        if not discord.opus.is_loaded():
+            possible_opus_paths = [
+                '/usr/lib/libopus.so.0',
+                '/usr/lib/x86_64-linux-gnu/libopus.so.0',
+                '/nix/store/*/libopus.so.0',
+                '/home/runner/.apt/usr/lib/libopus.so.0',
+                '/home/runner/.apt/lib/libopus.so.0',
+                '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/discord/libopus.so.0'
+            ]
+            
+            # Try each possible path
+            for path in possible_opus_paths:
+                import glob
+                if "*" in path:
+                    paths = glob.glob(path)
+                    for p in paths:
+                        try:
+                            discord.opus.load_opus(p)
+                            print(f"Successfully loaded opus from {p}")
+                            break
+                        except Exception as e:
+                            print(f"Failed to load opus from {p}: {e}")
+                            continue
+                else:
+                    try:
+                        discord.opus.load_opus(path)
+                        print(f"Successfully loaded opus from {path}")
+                        break
+                    except Exception as e:
+                        print(f"Failed to load opus from {path}: {e}")
+                        continue
+                        
+        # Create a symbolic link to ffmpeg if needed
+        if not os.path.exists('ffmpeg') and os.path.exists('/usr/bin/ffmpeg'):
+            os.symlink('/usr/bin/ffmpeg', 'ffmpeg')
+            print("Created symlink to system ffmpeg")
+            
+        # Final check
+        if not discord.opus.is_loaded():
+            print("WARNING: Could not load opus library automatically.")
+            print("Voice functionality might not work without opus.")
     except Exception as e:
-        print(f"Could not load opus library: {e}")
+        print(f"Error during opus loading process: {e}")
         print("Voice functionality might not work properly.")
 
 # Configure download options
