@@ -1,7 +1,5 @@
 
 discord.py
 yt-dlp
-ffmpeg-python
-asyncio
-flask
 python-dotenv
+flask

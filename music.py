@@ -78,6 +78,7 @@ async def stop(ctx):
         await ctx.send("⏹️ Stopped playing music.")
 
 
-keep_alive()  # Keep the bot alive
-bot.run(os.getenv("DISCORD_TOKEN"))
+if __name__ == "__main__":
+    keep_alive()  # Keep the bot alive
+    bot.run(os.getenv("DISCORD_TOKEN"))
 
