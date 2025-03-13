@@ -2,12 +2,31 @@ import os
 import discord
 import yt_dlp
 import asyncio
+import ctypes
+import ctypes.util
 from discord.ext import commands
 from discord import FFmpegPCMAudio
 from dotenv import load_dotenv
 from keep_alive import keep_alive
 
 load_dotenv()  # Load .env variables
+
+# Load opus library for voice
+if not discord.opus.is_loaded():
+    try:
+        discord.opus.load_opus('libopus.so.0')
+    except OSError:
+        try:
+            opus_path = ctypes.util.find_library('opus')
+            if opus_path:
+                discord.opus.load_opus(opus_path)
+            else:
+                # If it still fails, try installing libopus
+                os.system('apt-get update && apt-get install -y libopus0')
+                discord.opus.load_opus('libopus.so.0')
+        except Exception as e:
+            print(f"Could not load opus library: {e}")
+            print("Voice functionality might not work.")
 
 ytdl_format_options = {
     'format': 'bestaudio/best',

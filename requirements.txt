@@ -1,6 +1,7 @@
 
-discord.py
+discord.py[voice]
 yt-dlp
 python-dotenv
 flask
 PyNaCl
+opus-tools
