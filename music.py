@@ -32,7 +32,13 @@ ffmpeg_options = {
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 queue = []
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+# Make commands case-insensitive
+def get_prefix(bot, message):
+    return "!"
+
+bot = commands.Bot(command_prefix=get_prefix, 
+                  intents=discord.Intents.all(),
+                  case_insensitive=True)  # Add case insensitivity
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
