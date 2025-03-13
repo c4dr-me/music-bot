@@ -4,6 +4,7 @@ import yt_dlp
 import asyncio
 import ctypes
 import ctypes.util
+import time
 from discord.ext import commands
 from discord import FFmpegPCMAudio
 from dotenv import load_dotenv
@@ -97,6 +98,7 @@ ffmpeg_options = {
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 queue = []
 loop = False
+voice_clients = {}  # Dictionary to store voice clients and their last activity time
 
 # Make commands case-insensitive
 def get_prefix(bot, message):
@@ -280,6 +282,9 @@ async def search_song(ctx, *, search: str = None):
         type=discord.ActivityType.listening, 
         name=f"{player.title[:100]} | discord.gg/dZygWejWv8"
     ))
+    
+    # Update last activity time
+    voice_clients[ctx.guild.id] = time.time()
 
     # Progress bar updates
     total_duration = player.raw_duration
@@ -309,6 +314,8 @@ async def skip(ctx):
     """Skip the current song"""
     if ctx.voice_client and ctx.voice_client.is_playing():
         ctx.voice_client.stop()
+        # Update activity time
+        voice_clients[ctx.guild.id] = time.time()
         await ctx.send("⏭️ Skipped song")
         await next_song(ctx)
     else:
@@ -333,6 +340,8 @@ async def pause(ctx):
     """Pause the current song"""
     if ctx.voice_client and ctx.voice_client.is_playing():
         ctx.voice_client.pause()
+        # Update activity time
+        voice_clients[ctx.guild.id] = time.time()
         await ctx.send("⏸️ Paused")
     else:
         await ctx.send("❌ Nothing playing to pause")
@@ -342,6 +351,8 @@ async def resume(ctx):
     """Resume the paused song"""
     if ctx.voice_client and ctx.voice_client.is_paused():
         ctx.voice_client.resume()
+        # Update activity time
+        voice_clients[ctx.guild.id] = time.time()
         await ctx.send("▶️ Resumed")
     else:
         await ctx.send("❌ Nothing paused to resume")
@@ -376,6 +387,25 @@ async def clear_queue(ctx):
     queue = []
     await ctx.send("🧹 Queue cleared")
 
+async def check_voice_timeout():
+    """Check for voice channel inactivity and disconnect if inactive for 5 minutes"""
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        current_time = time.time()
+        for guild_id, last_activity in list(voice_clients.items()):
+            # If inactive for 5 minutes (300 seconds)
+            if current_time - last_activity > 300:
+                guild = bot.get_guild(guild_id)
+                if guild and guild.voice_client:
+                    await guild.voice_client.disconnect()
+                    print(f"Disconnected from {guild.name} due to inactivity")
+                    # Remove from tracking dictionary
+                    if guild_id in voice_clients:
+                        del voice_clients[guild_id]
+        
+        # Check every 30 seconds
+        await asyncio.sleep(30)
+
 @bot.event
 async def on_ready():
     """When the bot is ready"""
@@ -383,6 +413,9 @@ async def on_ready():
     await bot.change_presence(activity=activity)
     print(f'Logged in as {bot.user.name}')
     print('------')
+    
+    # Start the inactivity check task
+    bot.loop.create_task(check_voice_timeout())
 
 if __name__ == "__main__":
     keep_alive()  # Keep the bot alive
