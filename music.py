@@ -5,6 +5,7 @@ import asyncio
 from discord.ext import commands
 from discord import FFmpegPCMAudio
 from dotenv import load_dotenv
+from keep_alive import keep_alive
 
 load_dotenv()  # Load .env variables
 
@@ -77,4 +78,6 @@ async def stop(ctx):
         await ctx.send("⏹️ Stopped playing music.")
 
 
+keep_alive()  # Keep the bot alive
 bot.run(os.getenv("DISCORD_TOKEN"))
+
