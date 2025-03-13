@@ -25,8 +25,8 @@ ytdl_format_options = {
 ffmpeg_options = {
     'before_options':
     '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10',
-    'options': '-vn',
-    'executable': './ffmpeg'  # Use the downloaded ffmpeg binary
+    'options': '-vn'
+    # Let discord.py find ffmpeg in the system path
 }
 
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
