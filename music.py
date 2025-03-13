@@ -14,19 +14,44 @@ load_dotenv()  # Load .env variables
 # Load opus library for voice
 if not discord.opus.is_loaded():
     try:
-        discord.opus.load_opus('libopus.so.0')
-    except OSError:
-        try:
+        # Check common locations for the Opus library on Replit
+        possible_opus_paths = [
+            '/usr/lib/libopus.so.0',
+            '/usr/lib/x86_64-linux-gnu/libopus.so.0',
+            '/nix/store/*/libopus.so.0',
+            '/home/runner/.apt/usr/lib/libopus.so.0',
+            '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/discord/libopus.so.0'
+        ]
+        
+        # Try each possible path
+        for path in possible_opus_paths:
+            import glob
+            if "*" in path:
+                paths = glob.glob(path)
+                for p in paths:
+                    try:
+                        discord.opus.load_opus(p)
+                        print(f"Successfully loaded opus from {p}")
+                        break
+                    except Exception:
+                        continue
+            else:
+                try:
+                    discord.opus.load_opus(path)
+                    print(f"Successfully loaded opus from {path}")
+                    break
+                except Exception:
+                    continue
+                    
+        # If still not loaded, try the system path
+        if not discord.opus.is_loaded():
             opus_path = ctypes.util.find_library('opus')
             if opus_path:
                 discord.opus.load_opus(opus_path)
-            else:
-                # If it still fails, try installing libopus
-                os.system('apt-get update && apt-get install -y libopus0')
-                discord.opus.load_opus('libopus.so.0')
-        except Exception as e:
-            print(f"Could not load opus library: {e}")
-            print("Voice functionality might not work.")
+                print(f"Successfully loaded opus from {opus_path}")
+    except Exception as e:
+        print(f"Could not load opus library: {e}")
+        print("Voice functionality might not work properly.")
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
