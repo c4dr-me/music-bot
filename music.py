@@ -1,4 +1,3 @@
-
 import os
 import discord
 import yt_dlp
@@ -19,7 +18,7 @@ yt_dlp.utils.bug_reports_message = lambda: ''
 if not discord.opus.is_loaded():
     try:
         print("Attempting to load opus library...")
-        
+
         # Try loading from system paths first
         opus_path = ctypes.util.find_library('opus')
         if opus_path:
@@ -28,7 +27,7 @@ if not discord.opus.is_loaded():
                 print(f"Successfully loaded opus from system path: {opus_path}")
             except Exception as e:
                 print(f"Failed to load opus from system path: {e}")
-        
+
         # If not loaded, try common locations
         if not discord.opus.is_loaded():
             possible_opus_paths = [
@@ -39,7 +38,7 @@ if not discord.opus.is_loaded():
                 '/home/runner/.apt/lib/libopus.so.0',
                 '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/discord/libopus.so.0'
             ]
-            
+
             # Try each possible path
             for path in possible_opus_paths:
                 import glob
@@ -61,12 +60,12 @@ if not discord.opus.is_loaded():
                     except Exception as e:
                         print(f"Failed to load opus from {path}: {e}")
                         continue
-                        
+
         # Create a symbolic link to ffmpeg if needed
         if not os.path.exists('ffmpeg') and os.path.exists('/usr/bin/ffmpeg'):
             os.symlink('/usr/bin/ffmpeg', 'ffmpeg')
             print("Created symlink to system ffmpeg")
-            
+
         # Final check
         if not discord.opus.is_loaded():
             print("WARNING: Could not load opus library automatically.")
@@ -111,7 +110,7 @@ def parse_duration(duration_seconds):
     """Convert duration in seconds to a formatted string."""
     minutes, seconds = divmod(duration_seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    
+
     if hours > 0:
         return f"{hours}:{minutes:02d}:{seconds:02d}"
     else:
@@ -139,7 +138,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data = data['entries'][0]
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
-        
+
     @classmethod
     async def search(cls, search: str, *, loop=None, stream=False, ctx=None):
         loop = loop or asyncio.get_event_loop()
@@ -227,12 +226,12 @@ async def search_song(ctx, *, search: str = None):
         queue.append(search)
         await ctx.send(f'📋 "{search}" added to queue')
         return
-    
+
     # Check if user is in voice channel
     if not ctx.author.voice:
         await ctx.send('❌ You must be in a voice channel to use this command!')
         return 
-  
+
     # Connect to voice channel if not already connected
     if ctx.voice_client is None:
         vc = await ctx.author.voice.channel.connect()
@@ -246,7 +245,7 @@ async def search_song(ctx, *, search: str = None):
     else:
         await ctx.send(f'🔍 Searching for "{search}"')
         player = await YTDLSource.search(search, loop=bot.loop, stream=True, ctx=ctx)
-    
+
     if player is None:
         await ctx.send('❌ Could not find the song')
         return
@@ -263,21 +262,25 @@ async def search_song(ctx, *, search: str = None):
     embed.add_field(name='👍 Likes', value=player.likes or "Unknown", inline=True)
     embed.add_field(name='📅 Uploaded', value=date_formatted, inline=True)
     embed.add_field(name='⏱️ Duration', value=player.duration, inline=True)
-    
+
     if player.thumbnail:
         embed.set_thumbnail(url=player.thumbnail)
-    
+
     embed.set_footer(text=f"Requested by {ctx.author.display_name}")
-    
+
     # Create controls
     ctx.bot.controls = Controls(ctx, player.uploader, search)
-    
+
     # Send embed with controls
     message = await ctx.send(embed=embed, view=ctx.bot.controls)
-    
-    # Play the song
+
+    # Play the song and update bot status
     ctx.voice_client.play(player, after=lambda e: bot.loop.create_task(next_song(ctx, search)))
-    
+    await bot.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.listening, 
+        name=f"{player.title[:100]} | discord.gg/dZygWejWv8"
+    ))
+
     # Progress bar updates
     total_duration = player.raw_duration
     elapsed = 0
@@ -317,7 +320,7 @@ async def stop(ctx):
     global queue, loop
     queue = []
     loop = False
-    
+
     if ctx.voice_client:
         ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
@@ -349,11 +352,11 @@ async def show_queue(ctx):
     if not queue:
         await ctx.send("📭 Queue is empty")
         return
-        
+
     embed = discord.Embed(title="🎵 Music Queue", color=discord.Color.blue())
     for i, song in enumerate(queue, start=1):
         embed.add_field(name=f"{i}. {song}", value="\u200b", inline=False)
-    
+
     await ctx.send(embed=embed)
 
 @bot.command(name='loop')
@@ -376,7 +379,7 @@ async def clear_queue(ctx):
 @bot.event
 async def on_ready():
     """When the bot is ready"""
-    activity = discord.Activity(type=discord.ActivityType.listening, name="!play [song]")
+    activity = discord.Activity(type=discord.ActivityType.listening, name="!play | discord.gg/dZygWejWv8")
     await bot.change_presence(activity=activity)
     print(f'Logged in as {bot.user.name}')
     print('------')
