@@ -269,14 +269,14 @@ async def search_song(ctx, *, search: str = None):
     
     embed.set_footer(text=f"Requested by {ctx.author.display_name}")
     
-    message = await ctx.send(embed=embed)
+    # Create controls
+    ctx.bot.controls = Controls(ctx, player.uploader, search)
+    
+    # Send embed with controls
+    message = await ctx.send(embed=embed, view=ctx.bot.controls)
     
     # Play the song
     ctx.voice_client.play(player, after=lambda e: bot.loop.create_task(next_song(ctx, search)))
-
-    # Create controls
-    ctx.bot.controls = Controls(ctx, player.uploader, search)
-    await ctx.send("🎮 Music Controls:", view=ctx.bot.controls)
     
     # Progress bar updates
     total_duration = player.raw_duration
