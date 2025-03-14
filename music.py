@@ -88,13 +88,17 @@ ytdl_format_options = {
     'default_search': 'auto',
     'source_address': '0.0.0.0',
     'outtmpl': 'downloads/%(id)s.%(ext)s',
-    'extract_flat': True,
+    'extract_flat': False,
     'geo_bypass': True,
     'geo_bypass_country': 'US',
-    'extractor_retries': 3,
+    'extractor_retries': 5,
     'http_headers': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36'
-    }
+    },
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'opus',
+    }]
 }
 
 ffmpeg_options = {
