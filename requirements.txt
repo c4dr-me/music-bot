@@ -5,6 +5,7 @@ python-dotenv
 flask
 PyNaCl==1.5.0
 pynacl
+opus-tools
 cffi
 requests
 beautifulsoup4
