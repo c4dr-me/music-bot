@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 from keep_alive import keep_alive
 import requests
 
+FFmpegPCMAudio(executable="/usr/bin/ffmpeg", source=filename, **ffmpeg_options)
+
 load_dotenv()  # Load .env variables
 
 # Disable yt-dlp bug reports
@@ -127,78 +129,100 @@ def get_prefix(bot, message):
     return "!"
 
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(),case_insensitive=True)
+bot = commands.Bot(command_prefix="!",
+                   intents=discord.Intents.all(),
+                   case_insensitive=True)
 
 # Keep track of sent messages for logging purposes
 sent_messages = {}
 log_channel_id = 1092519448314912863
 
+
 @bot.event
 async def on_message(message):
-            # Ignore messages from the bot itself
-            if message.author == bot.user:
-                return
+    # Ignore messages from the bot itself
+    if message.author == bot.user:
+        return
 
-            # Check if the message is a DM
-            if isinstance(message.channel, discord.DMChannel):
-                # Log the message to the specified channel
-                log_channel = bot.get_channel(log_channel_id)
-                if log_channel:
-                    # If it's a reply to one of the bot's messages
-                    if message.reference:
-                        original_message = await message.channel.fetch_message(message.reference.message_id)
-                        await log_channel.send(f"User replied to bot's DM: {original_message.content}\nReply: {message.content}")
-                    else:
-                        # If it's a new DM, log it
-                        await log_channel.send(f"New DM from {message.author}: {message.content}")
+    # Check if the message is a DM
+    if isinstance(message.channel, discord.DMChannel):
+        # Log the message to the specified channel
+        log_channel = bot.get_channel(log_channel_id)
+        if log_channel:
+            # If it's a reply to one of the bot's messages
+            if message.reference:
+                original_message = await message.channel.fetch_message(
+                    message.reference.message_id)
+                await log_channel.send(
+                    f"User replied to bot's DM: {original_message.content}\nReply: {message.content}"
+                )
+            else:
+                # If it's a new DM, log it
+                await log_channel.send(
+                    f"New DM from {message.author}: {message.content}")
 
-                # Handle the response or perform other actions as needed
-                await message.channel.send("I received your message! I'll log it.")
+        # Handle the response or perform other actions as needed
+        await message.channel.send("I received your message! I'll log it.")
 
-            # Allow commands to still work by passing the message to the command handler
-            await bot.process_commands(message)
+    # Allow commands to still work by passing the message to the command handler
+    await bot.process_commands(message)
+
 
 @bot.command()
 async def send_dm(ctx, member: discord.Member, *, content: str):
-            """Command to send a DM to a user"""
-            try:
-                # Send a DM to the user
-                await member.send(content)
-                # Log the message sent
-                print(f"Sent DM to {member}: {content}")
-            except discord.errors.Forbidden:
-                await ctx.send(f"Could not send DM to {member.mention}.")
+    """Command to send a DM to a user"""
+    try:
+        # Send a DM to the user
+        await member.send(content)
+        # Log the message sent
+        print(f"Sent DM to {member}: {content}")
+    except discord.errors.Forbidden:
+        await ctx.send(f"Could not send DM to {member.mention}.")
+
 
 # This dictionary will store the user and their annoyance task
 annoyed_users = {}
 
 # List of harmless messages
 messages = [
-    "क्या उल्लू बनाता है?", "क्या बकवास कर रहा है?", "तू बस बातें बनाता है!", "तेरी अकल पर पत्थर पड़ गया क्या?",
-    "क्या फालतू बक रहा है?", "तू अपने काम से काम रख!", "तू बस बड़ी-बड़ी बातें करता है!", "तेरी बुद्धि कहाँ गुम हो गई?",
-    "क्या तेरी बुद्धि सो गई है?", "तू बस बेवकूफ बनाता है!", "क्या तूने दिमाग लगाना छोड़ दिया?", "तू बस बकवास करता है!",
-    "तू बस अपनी ही बातों में उलझा रहता है!", "क्या तूने दिमाग खो दिया?", "तू बस बातें बनाने में माहिर है!",
-    "क्या तूने अकल पर ताला लगा रखा है?", "तू बस बड़बोला है!", "क्या तूने दिमाग घर पर छोड़ दिया?",
-    "तू बस बातें बनाने में लगा रहता है!", "क्या तूने अकल को बंद कर दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
-    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बकवास करने में मस्त है!", "क्या तूने अकल को गुम कर दिया?",
-    "तू बस बातें बनाने में लगा रहता है!", "क्या तूने दिमाग को छुट्टी दे दी?", "तू बस बड़बोलेपन में मस्त है!",
-    "क्या तूने अकल को सोने भेज दिया?", "तू बस बकवास करने में लगा रहता है!", "क्या तूने दिमाग को बंद कर दिया?",
-    "तू बस बड़ी-बड़ी बातें करता है!", "क्या तूने अकल को गायब कर दिया?", "तू बस बकवास करने में मस्त है!",
-    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!", "क्या तूने अकल को भूला दिया?",
-    "तू बस बकवास करने में लगा रहता है!", "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
-    "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!", "क्या तूने दिमाग को छोड़ दिया?",
-    "तू बस बड़बोलेपन में लगा रहता है!", "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!",
-    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!", "क्या तूने अकल को गुम कर दिया?",
-    "तू बस बकवास करने में मस्त है!", "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!",
-    "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!", "क्या तूने दिमाग को आराम दे दिया?",
-    "तू बस बड़ी-बड़ी बातें करता है!", "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!",
-    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!", "क्या तूने अकल को भूला दिया?",
-    "तू बस बकवास करने में लगा रहता है!", "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
-    "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!", "क्या तूने दिमाग को छोड़ दिया?",
-    "तू बस बड़बोलेपन में लगा रहता है!", "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!"
+    "क्या उल्लू बनाता है?", "क्या बकवास कर रहा है?", "तू बस बातें बनाता है!",
+    "तेरी अकल पर पत्थर पड़ गया क्या?", "क्या फालतू बक रहा है?",
+    "तू अपने काम से काम रख!", "तू बस बड़ी-बड़ी बातें करता है!",
+    "तेरी बुद्धि कहाँ गुम हो गई?", "क्या तेरी बुद्धि सो गई है?",
+    "तू बस बेवकूफ बनाता है!", "क्या तूने दिमाग लगाना छोड़ दिया?",
+    "तू बस बकवास करता है!", "तू बस अपनी ही बातों में उलझा रहता है!",
+    "क्या तूने दिमाग खो दिया?", "तू बस बातें बनाने में माहिर है!",
+    "क्या तूने अकल पर ताला लगा रखा है?", "तू बस बड़बोला है!",
+    "क्या तूने दिमाग घर पर छोड़ दिया?", "तू बस बातें बनाने में लगा रहता है!",
+    "क्या तूने अकल को बंद कर दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
+    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बकवास करने में मस्त है!",
+    "क्या तूने अकल को गुम कर दिया?", "तू बस बातें बनाने में लगा रहता है!",
+    "क्या तूने दिमाग को छुट्टी दे दी?", "तू बस बड़बोलेपन में मस्त है!",
+    "क्या तूने अकल को सोने भेज दिया?", "तू बस बकवास करने में लगा रहता है!",
+    "क्या तूने दिमाग को बंद कर दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
+    "क्या तूने अकल को गायब कर दिया?", "तू बस बकवास करने में मस्त है!",
+    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!",
+    "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!",
+    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
+    "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!",
+    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!",
+    "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!",
+    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
+    "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!",
+    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!",
+    "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!",
+    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
+    "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!",
+    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!",
+    "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!",
+    "क्या तूने दिमाग को आराम दे दिया?", "तू बस बड़ी-बड़ी बातें करता है!",
+    "क्या तूने अकल को गुम कर दिया?", "तू बस बकवास करने में मस्त है!",
+    "क्या तूने दिमाग को छोड़ दिया?", "तू बस बड़बोलेपन में लगा रहता है!",
+    "क्या तूने अकल को भूला दिया?", "तू बस बकवास करने में लगा रहता है!"
 ]
 
 ALLOWED_ROLE_NAME = "Batman"
+
 
 # Define the task to annoy users
 @tasks.loop(minutes=1)
@@ -212,15 +236,19 @@ async def annoy_user():
             except discord.errors.Forbidden:
                 pass  # Ignore if DM is closed
 
+
 # Helper function to check if the user has the "batman" role
 def has_batman_role(ctx):
-    return any(role.name.lower() == ALLOWED_ROLE_NAME.lower() for role in ctx.author.roles)
+    return any(role.name.lower() == ALLOWED_ROLE_NAME.lower()
+               for role in ctx.author.roles)
+
 
 @bot.command()
 async def annoy(ctx, member: discord.Member):
     """Command to annoy the user with random harmless messages."""
     if not has_batman_role(ctx):
-        await ctx.send("Sorry, you don't have the required 'batman' role to annoy users.")
+        await ctx.send(
+            "Sorry, you don't have the required 'batman' role to annoy users.")
         return
 
     if member.id not in annoyed_users:
@@ -233,11 +261,14 @@ async def annoy(ctx, member: discord.Member):
     else:
         await ctx.send(f"{member.mention} is already being annoyed!")
 
+
 @bot.command()
 async def unannoy(ctx, member: discord.Member):
     """Command to stop annoying the user."""
     if not has_batman_role(ctx):
-        await ctx.send("Sorry, you don't have the required 'batman' role to stop annoying users.")
+        await ctx.send(
+            "Sorry, you don't have the required 'batman' role to stop annoying users."
+        )
         return
 
     if member.id in annoyed_users:
@@ -250,48 +281,56 @@ async def unannoy(ctx, member: discord.Member):
     else:
         await ctx.send(f"{member.mention} is not currently being annoyed.")
 
+
 @bot.command()
 async def stop_annoy(ctx, member: discord.Member):
     """Command to stop annoying the user."""
     if not has_batman_role(ctx):
-        await ctx.send("Sorry, you don't have the required 'batman' role to stop annoying users.")
+        await ctx.send(
+            "Sorry, you don't have the required 'batman' role to stop annoying users."
+        )
         return
 
     await unannoy(ctx, member)  # Reuse unannoy command to handle stopping.
 
+
 # Global variable to store currently playing song
 current_song = {"artist": None, "title": None}
 
-async def get_lyrics(ctx, artist: str, song: str):        
 
-        query = f'{song} {artist}'
-        search_url = f"https://api.genius.com/search?q={query}"
-        
-        response = requests.get(search_url, headers=HEADERS)
-        
-        if not response.status_code == 200:
-            await ctx.send(f"erroras {response.status_code} nxj")
-            return
-        
-        search_data = response.json()
-        try:
-            song_url = search_data['response']['hits'][0]['result']['url']
-            song_name = search_data['response']['hits'][0]['result']['title']
-            song_artist = search_data['response']['hits'][0]['result']['primary_artist']['name']
-            song_thumbnail = search_data['response']['hits'][0]['result']["song_art_image_thumbnail_url"]
-            date = search_data['response']['hits'][0]['result']["release_date_for_display"]
-        except IndexError:
-            await ctx.send("neradau lyricsu")
-            return
-        
-        embed = discord.Embed(title=song_name, url=song_url, color=discord.Color.pink())
-        embed.set_author(name=song_artist)
-        embed.set_thumbnail(url=song_thumbnail)
-        embed.add_field(name='Released', value=date)
-        
-        await ctx.send(embed=embed, ephemeral=False)
+async def get_lyrics(ctx, artist: str, song: str):
 
+    query = f'{song} {artist}'
+    search_url = f"https://api.genius.com/search?q={query}"
 
+    response = requests.get(search_url, headers=HEADERS)
+
+    if not response.status_code == 200:
+        await ctx.send(f"erroras {response.status_code} nxj")
+        return
+
+    search_data = response.json()
+    try:
+        song_url = search_data['response']['hits'][0]['result']['url']
+        song_name = search_data['response']['hits'][0]['result']['title']
+        song_artist = search_data['response']['hits'][0]['result'][
+            'primary_artist']['name']
+        song_thumbnail = search_data['response']['hits'][0]['result'][
+            "song_art_image_thumbnail_url"]
+        date = search_data['response']['hits'][0]['result'][
+            "release_date_for_display"]
+    except IndexError:
+        await ctx.send("neradau lyricsu")
+        return
+
+    embed = discord.Embed(title=song_name,
+                          url=song_url,
+                          color=discord.Color.pink())
+    embed.set_author(name=song_artist)
+    embed.set_thumbnail(url=song_thumbnail)
+    embed.add_field(name='Released', value=date)
+
+    await ctx.send(embed=embed, ephemeral=False)
 
 
 def parse_duration(duration_seconds):
@@ -394,9 +433,9 @@ class Controls(discord.ui.View):
 
     @discord.ui.button(label='Lyrics', style=discord.ButtonStyle.blurple)
     async def lyrics_button(self, interaction: discord.Interaction,
-                                button: discord.ui.Button):
-        """Button to fetch and display lyrics"""        
-        await interaction.response.defer()  # Acknowledge the interaction        
+                            button: discord.ui.Button):
+        """Button to fetch and display lyrics"""
+        await interaction.response.defer()  # Acknowledge the interaction
         await get_lyrics(self.ctx, self.artist, self.song)
 
     @discord.ui.button(label='Loop', style=discord.ButtonStyle.green, row=1)
@@ -623,8 +662,6 @@ async def clear_queue(ctx):
     global queue
     queue = []
     await ctx.send("🧹 Queue cleared")
-
-
 
 
 async def check_voice_timeout():
