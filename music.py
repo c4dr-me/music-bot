@@ -12,8 +12,6 @@ from dotenv import load_dotenv
 from keep_alive import keep_alive
 import requests
 
-FFmpegPCMAudio(executable="/usr/bin/ffmpeg", source=filename, **ffmpeg_options)
-
 load_dotenv()  # Load .env variables
 
 # Disable yt-dlp bug reports
@@ -367,7 +365,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if 'entries' in data:
             data = data['entries'][0]
         filename = data['url'] if stream else ytdl.prepare_filename(data)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options),
+        return cls(discord.FFmpegPCMAudio(filename,
+                                          executable="/usr/bin/ffmpeg",
+                                          **ffmpeg_options),
                    data=data)
 
     @classmethod
