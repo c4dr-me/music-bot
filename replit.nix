@@ -1,6 +1,7 @@
 
 {pkgs}: {
   deps = [
+    pkgs.openssh
     pkgs.imagemagick_light
     pkgs.lsof
     pkgs.pkg-config
