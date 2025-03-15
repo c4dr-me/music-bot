@@ -6,8 +6,6 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libffi-dev \
     python3-dev \
-    libopus-dev \
-    opus-tools \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -15,9 +13,9 @@ RUN python -m pip install --upgrade pip setuptools wheel
 
 COPY requirements.txt .
 
-RUN python -m venv /venv
-RUN /venv/bin/pip install --no-cache-dir -r requirements.txt
+# Install dependencies globally (not in venv)
+RUN pip install --no-cache-dir -r requirements.txt --timeout=60 -i https://pypi.org/simple
 
 COPY . .
 
-CMD ["/venv/bin/python", "main.py"]
+CMD ["python", "main.py"]
