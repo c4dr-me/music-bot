@@ -1,1 +1,3 @@
-web: chmod +x setup.sh && ./setup.sh && python main.py
+web: bash setup.sh && python main.py 
+
+// satisfies
