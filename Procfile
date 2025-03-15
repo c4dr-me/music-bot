@@ -1,3 +1,1 @@
-web: bash setup.sh && python main.py 
-
-// satisfies
+web: bash setup.sh && python main.py
