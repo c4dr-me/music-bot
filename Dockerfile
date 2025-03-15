@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
@@ -7,14 +7,14 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     python3-dev \
     libpq-dev \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m pip install --upgrade pip setuptools wheel
 
 COPY requirements.txt .
 
-# Install dependencies globally (not in venv)
-RUN pip install --no-cache-dir -r requirements.txt --timeout=60 -i https://pypi.org/simple
+RUN pip install --no-cache-dir -r requirements.txt --timeout=60 -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 COPY . .
 
