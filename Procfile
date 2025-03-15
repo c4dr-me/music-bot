@@ -1,1 +1,2 @@
-web: bash setup.sh && python main.py
+
+web: docker build -t music-bot . && docker run music-bot
